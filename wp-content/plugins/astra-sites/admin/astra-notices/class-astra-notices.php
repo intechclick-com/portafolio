@@ -35,7 +35,7 @@ if ( ! class_exists( 'Astra_Notices' ) ) :
 		 * @var array Notices.
 		 * @since 1.4.0
 		 */
-		private static $version = '1.1.5';
+		private static $version = '1.1.7';
 
 		/**
 		 * Notices
@@ -112,6 +112,11 @@ if ( ! class_exists( 'Astra_Notices' ) ) :
 		 * @return void
 		 */
 		public function dismiss_notice() {
+
+			if ( ! apply_filters( 'astra_notices_user_cap_check', current_user_can( 'manage_options' ) ) ) {
+				return;
+			}
+
 			$notice_id           = ( isset( $_POST['notice_id'] ) ) ? sanitize_key( $_POST['notice_id'] ) : '';
 			$repeat_notice_after = ( isset( $_POST['repeat_notice_after'] ) ) ? absint( $_POST['repeat_notice_after'] ) : '';
 			$nonce               = ( isset( $_POST['nonce'] ) ) ? sanitize_key( $_POST['nonce'] ) : '';
@@ -142,7 +147,7 @@ if ( ! class_exists( 'Astra_Notices' ) ) :
 		 * @return void
 		 */
 		public function enqueue_scripts() {
-			wp_register_script( 'astra-notices', self::get_uri() . 'notices.js', array( 'jquery' ), self::$version, true );
+			wp_register_script( 'astra-notices', self::_get_uri() . 'notices.js', array( 'jquery' ), self::$version, true );
 			wp_localize_script(
 				'astra-notices',
 				'astraNotices',
@@ -241,10 +246,10 @@ if ( ! class_exists( 'Astra_Notices' ) ) :
 
 			?>
 			<div id="<?php echo esc_attr( $notice['id'] ); ?>" class="<?php echo esc_attr( $notice['classes'] ); ?>" data-repeat-notice-after="<?php echo esc_attr( $notice['repeat-notice-after'] ); ?>">
-				<p class="notice-container">
+				<div class="notice-container">
 					<?php do_action( "astra_notice_inside_markup_{$notice['id']}" ); ?>
 					<?php echo wp_kses_post( $notice['message'] ); ?>
-				</p>
+				</div>
 			</div>
 			<?php
 
@@ -334,20 +339,15 @@ if ( ! class_exists( 'Astra_Notices' ) ) :
 		 *
 		 * @return mixed URL.
 		 */
-		public static function get_uri() {
-			$path       = wp_normalize_path( dirname( __FILE__ ) );
-			$theme_dir  = wp_normalize_path( get_template_directory() );
-			$plugin_dir = wp_normalize_path( WP_PLUGIN_DIR );
+		public static function _get_uri() { // phpcs:ignore PSR2.Methods.MethodDeclaration.Underscore
+			$path      = wp_normalize_path( dirname( __FILE__ ) );
+			$theme_dir = wp_normalize_path( get_template_directory() );
 
 			if ( strpos( $path, $theme_dir ) !== false ) {
 				return trailingslashit( get_template_directory_uri() . str_replace( $theme_dir, '', $path ) );
-			} elseif ( strpos( $path, $plugin_dir ) !== false ) {
-				return plugin_dir_url( __FILE__ );
-			} elseif ( strpos( $path, dirname( plugin_basename( __FILE__ ) ) ) !== false ) {
+			} else {
 				return plugin_dir_url( __FILE__ );
 			}
-
-			return false;
 		}
 
 	}

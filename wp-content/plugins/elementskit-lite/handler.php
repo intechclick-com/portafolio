@@ -197,7 +197,7 @@ class Handler{
      * @access public
      */
 	public function add_meta_for_search_excluded(){
-		if (get_post_type() == 'elementskit_template') {
+        if (get_post_type() == 'elementskit_template' || get_post_type() == 'elementskit_content' ) {
 			echo '<meta name="robots" content="noindex,nofollow" />', "\n";
 		}
 	}
